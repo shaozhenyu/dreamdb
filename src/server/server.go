@@ -3,16 +3,14 @@ package server
 import (
 	"fmt"
 	"net"
-
-	"db"
 )
 
 type Server struct {
 	listener net.Listener
-	cache    *db.DB
+	cache    ICache
 }
 
-func NewServer(cache *db.DB) (*Server, error) {
+func NewServer(cache ICache) (*Server, error) {
 	s := &Server{cache: cache}
 
 	var err error

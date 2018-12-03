@@ -28,7 +28,7 @@ func main() {
 	}
 }
 
-func createServer(cache *db.DB) (err error) {
+func createServer(cache server.ICache) (err error) {
 	svr, err = server.NewServer(cache)
 	return
 }
