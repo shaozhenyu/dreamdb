@@ -44,6 +44,11 @@ func (db *DB) String() string {
 }
 
 func (db *DB) Commit() error {
+	// truncate
+	if err := db.file.Truncate(0); err != nil {
+		return err
+	}
+
 	var buf bytes.Buffer
 	for k, v := range db.data {
 		buf.WriteString(k)

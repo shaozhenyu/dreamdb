@@ -10,8 +10,9 @@ import (
 )
 
 type clientConn struct {
-	server      *Server
-	bufReadConn net.Conn
+	server       *Server
+	bufReadConn  net.Conn
+	bufWriteConn net.Conn
 }
 
 func newClientConn(s *Server) *clientConn {
@@ -22,6 +23,7 @@ func newClientConn(s *Server) *clientConn {
 
 func (cc *clientConn) setConn(conn net.Conn) {
 	cc.bufReadConn = conn
+	cc.bufWriteConn = conn
 }
 
 func (cc *clientConn) Run() {
@@ -37,21 +39,33 @@ func (cc *clientConn) Run() {
 			}
 		}
 		buf = buf[:size]
-		err = cc.dispatch(bytes.Split(buf, []byte(" ")))
+		msg, err := cc.dispatch(bytes.Split(buf, []byte(" ")))
 		if err != nil {
-			log.Fatalf("cc.dispatch error(%s)", err.Error())
+			msg = err.Error()
+		}
+
+		// send result
+		_, err = cc.bufWriteConn.Write([]byte(msg))
+		if err != nil {
+			log.Fatalf("cc.bufWriteConn.Write error(%s)", err.Error())
 		}
 	}
 }
 
-func (cc *clientConn) dispatch(data [][]byte) (err error) {
-	fmt.Println("dispatch:", string(data[0]))
+func (cc *clientConn) dispatch(data [][]byte) (msg string, err error) {
+	msg = "success"
 	cmd := data[0]
 	cmd = bytes.ToLower(cmd)
 	data = data[1:]
 	switch string(cmd) {
 	case INSERT:
 		err = cc.insert(data)
+	case DELETE:
+		err = cc.delete(data)
+	case UPDATE:
+		err = cc.update(data)
+	case SELECT:
+		return cc.get(data)
 	default:
 		err = errors.New("undefine cmd error")
 	}
